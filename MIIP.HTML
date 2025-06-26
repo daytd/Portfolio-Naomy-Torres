@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Solicitar Permiso - Profesor</title>
+  <link rel="stylesheet" href="style.css" />
+  
+</head>
+<body>
+  <div class="container">
+    <h1>Solicitar Permiso</h1>
+
+    <form id="form-solicitud">
+      <label for="nombre">Nombre del profesor:</label>
+      <input type="text" id="nombre" required />
+
+      <label for="tipo">Tipo de permiso:</label>
+      <select id="tipo" required>
+        <option value="">-- Seleccione --</option>
+        <option value="Vacaciones">Vacaciones</option>
+        <option value="Cita médica">Cita médica</option>
+        <option value="Otro">Otro</option>
+      </select>
+
+      <label for="fecha-inicio">Fecha de inicio:</label>
+      <input type="date" id="fecha-inicio" required />
+
+      <label for="fecha-fin">Fecha de fin:</label>
+      <input type="date" id="fecha-fin" required />
+
+      <label for="descripcion">Descripción / Motivo:</label>
+      <textarea id="descripcion" rows="3" placeholder="Escribe detalles adicionales..." required></textarea>
+
+      <button type="submit">Enviar solicitud</button>
+    </form>
+
+    <div class="solicitudes" id="mis-solicitudes">
+      <h2>Mis solicitudes</h2>
+      <div id="lista-solicitudes-profesor">
+        <!-- Solicitudes aquí -->
+      </div>
+    </div>
+
+    <p><a href="Registro dirección">Ir a panel de la directora</a></p>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "solicitudesPermisos";
+
+    function cargarSolicitudes() {
+      const json = localStorage.getItem(STORAGE_KEY);
+      return json ? JSON.parse(json) : [];
+    }
+
+    function guardarSolicitudes(solicitudes) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(solicitudes));
+    }
+
+    function mostrarSolicitudesProfesor(nombre) {
+      const listaDiv = document.getElementById("lista-solicitudes-profesor");
+      listaDiv.innerHTML = "";
+
+      if (!nombre) {
+        listaDiv.innerHTML = "<p>Ingresa tu nombre para ver tus solicitudes.</p>";
+        return;
+      }
+
+      const solicitudes = cargarSolicitudes();
+      const solicitudesUsuario = solicitudes.filter(s => s.nombre.toLowerCase() === nombre.toLowerCase());
+
+      if (solicitudesUsuario.length === 0) {
+        listaDiv.innerHTML = "<p>No tienes solicitudes.</p>";
+        return;
+      }
+
+      solicitudesUsuario.forEach(solicitud => {
+        const div = document.createElement("div");
+        div.className = "permiso";
+        div.innerHTML = `
+          <strong>Tipo:</strong> ${solicitud.tipo} <br/>
+          <strong>Fechas:</strong> ${solicitud.fechaInicio} - ${solicitud.fechaFin} <br/>
+          <strong>Motivo:</strong> ${solicitud.descripcion} <br/>
+          <div class="estado ${solicitud.estado.toLowerCase()}">Estado: ${solicitud.estado}</div>
+        `;
+        listaDiv.appendChild(div);
+      });
+    }
+
+    document.getElementById("form-solicitud").addEventListener("submit", function(e) {
+      e.preventDefault();
+
+      const nombre = document.getElementById("nombre").value.trim();
+      const tipo = document.getElementById("tipo").value;
+      const fechaInicio = document.getElementById("fecha-inicio").value;
+      const fechaFin = document.getElementById("fecha-fin").value;
+      const descripcion = document.getElementById("descripcion").value.trim();
+
+      if (new Date(fechaFin) < new Date(fechaInicio)) {
+        alert("La fecha de fin no puede ser anterior a la fecha de inicio.");
+        return;
+      }
+
+      let solicitudes = cargarSolicitudes();
+      solicitudes.push({
+        nombre,
+        tipo,
+        fechaInicio,
+        fechaFin,
+        descripcion,
+        estado: "Pendiente"
+      });
+      guardarSolicitudes(solicitudes);
+
+      alert("Solicitud enviada correctamente.");
+
+      this.reset();
+      mostrarSolicitudesProfesor(nombre);
+    });
+
+    // Mostrar solicitudes cuando el usuario escribe su nombre
+    document.getElementById("nombre").addEventListener("input", (e) => {
+      mostrarSolicitudesProfesor(e.target.value.trim());
+    });
+
+    // Inicializar vacío
+    mostrarSolicitudesProfesor("");
+  </script>
+</body>
+</html>
